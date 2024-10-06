@@ -28,12 +28,13 @@ const courseSchema = new Schema({
     description: String,
     price: Number,
     imageUrl: String,
-    creatorID: ObjectId
+    creatorId: ObjectId
 });
 
+// stores the mapping of user to course
 const purchaseSchema = new Schema({
-    userID: ObjectId,
-    courseID: ObjectId,
+    userId: ObjectId,
+    courseId: ObjectId,
 });
 
 const userModel = mongoose.model('User', userSchema);

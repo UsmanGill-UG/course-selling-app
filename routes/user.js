@@ -1,9 +1,9 @@
 const express = require('express');
 const userRouter = express.Router();  // Initialize the router
-const { userModel } = require('../db'); // Import the userModel
+const { userModel, purchaseModel, courseModel } = require('../db'); // Import the userModel
 const jwt = require('jsonwebtoken');
 const { JWT_USER_PASSWORD } = require('../config');
-
+const { userMiddleware } = require('../middleware/user');
 
 userRouter.post('/signup', async (req, res) => {
     const { email, password, firstName, lastName } = req.body; // Zod
@@ -43,8 +43,11 @@ userRouter.post('/signin', async (req, res) => {
     }
 });
 
-userRouter.get('/purchases', (req, res) => {
-    res.send('Hello World!');
+userRouter.get('/purchases', userMiddleware, async (req, res) => {
+    const userId = req.userId; 
+    const purchases = await purchaseModel.find({ userId: userId });
+    const courseData = await courseModel.find({ _id: { $in: purchases.map(p => p.courseId)}});
+    res.json(courseData);  
 });
 
 module.exports = userRouter;  // Export the userRouter

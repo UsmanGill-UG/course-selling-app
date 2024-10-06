@@ -55,7 +55,7 @@ adminRouter.post('/course',adminMiddleware,  async (req, res) => {
         description: description,
         imageUrl: imageUrl,
         price: price,
-        adminId: adminId
+        creatorId: adminId
     });
 
 
@@ -70,25 +70,39 @@ adminRouter.put('/course',adminMiddleware,  async (req, res) => {
     const adminId = req.userId
     const { title, description, imageUrl,  price, courseId} = req.body;
 
+    if (!courseId) {
+        res.status(400).json({ message: 'Course ID is required' });
+        return;
+    }
 
-    // creating a web3 saas in 6 hours // youtube video
-    const course = await courseModel.updateOne({
-        _id: courseId,
-        creatorId: adminId
-    }, 
-    {
-        title: title,
-        description: description,
-        imageUrl: imageUrl,
-        price: price,
-        adminId: adminId
+    // Fetch the course to verify that the admin is the creator of the course
+    const course = await courseModel.findById(courseId);
+
+    if (!course) {
+        return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check if the adminId is the same as the creatorId of the course
+    if (course.creatorId.toString() !== adminId) {
+        return res.status(403).json({ message: 'You do not have permission to update this course' });
+    }
+
+    // Proceed with the update if the adminId matches the creatorId
+    const updatedCourse = await courseModel.updateOne(
+        { _id: courseId, creatorId: adminId },
+        {
+            title: title,
+            description: description,
+            imageUrl: imageUrl,
+            price: price,
+            adminId: adminId
+        }
+    );
+
+    res.json({
+        message: 'Course Updated',
+        courseId: updatedCourse._id
     });
-
-
-    res.json({ 
-        message: 'Course Created',
-        courseId: course._id
-    }); 
 });
 
 // admin can get all the courses he created
@@ -106,4 +120,4 @@ adminRouter.get('/course/bulk', adminMiddleware, async(req, res) => {
     }); 
 });
 
-module.exports = adminRouter;  // Export the adminRouter
+module.exports = adminRouter;
